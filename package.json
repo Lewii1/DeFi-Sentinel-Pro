@@ -2,9 +2,11 @@
   "name": "monitor-app",
   "version": "1.0.0",
   "main": "server.js",
+  "bin": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "build-win": "npx pkg . --targets node18-win-x64 --output SentinelPro.exe"
   },
   "keywords": [],
   "author": "",
@@ -14,5 +16,13 @@
     "cors": "^2.8.6",
     "cross-fetch": "^4.1.0",
     "express": "^5.2.1"
+  },
+  "pkg": {
+    "assets": [
+      "public/**/*"
+    ]
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
   }
 }
