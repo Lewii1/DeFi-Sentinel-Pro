@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>DeFi Sentinel Pro | Black Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            background-color: #020202;
+            background-image: radial-gradient(circle at top right, rgba(168, 85, 247, 0.05), transparent 40%),
+                radial-gradient(circle at bottom left, rgba(56, 189, 248, 0.03), transparent 40%);
+            color: #e5e5e5;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+
+        .font-mono-custom {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .glass-container {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+        }
+
+        .strategy-btn,
+        .chain-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #8b949e;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+
+        .strategy-btn.active {
+            background: rgba(168, 85, 247, 0.15);
+            border-color: rgba(168, 85, 247, 0.5);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+        }
+
+        .chain-btn.active {
+            background: rgba(56, 189, 248, 0.15);
+            border-color: rgba(56, 189, 248, 0.4);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+        }
+
+        .risk-badge {
+            font-size: 10px;
+            font-weight: 900;
+            padding: 4px 10px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .neon-purple-text {
+            color: #d8b4fe;
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+        }
+
+        .neon-green-text {
+            color: #4ade80;
+            text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-8">
+    <div class="max-w-[98%] mx-auto">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
+            <div>
+                <div class="flex items-center gap-4">
+                    <h1
+                        class="text-4xl md:text-5xl font-black text-white tracking-tighter drop-shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+                        SENTINEL PRO</h1>
+                    <div class="relative flex h-4 w-4 mt-1">
+                        <span
+                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span
+                            class="relative inline-flex rounded-full h-4 w-4 bg-green-500 shadow-[0_0_15px_rgba(74,222,128,0.8)]"></span>
+                    </div>
+                    <span id="sync-flash"
+                        class="hidden text-purple-400 animate-pulse ml-2 text-2xl drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]">⚡</span>
+                </div>
+                <p class="text-gray-400 text-xs md:text-sm mt-3 font-bold tracking-[0.2em] uppercase neon-purple-text">
+                    Cyber-Institutional Grade Terminal • Black Edition</p>
+            </div>
+
+            <div
+                class="glass-container p-5 md:p-6 border-t-2 border-t-purple-500/50 flex flex-col w-full md:w-auto shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+                <span class="text-[10px] text-purple-300/70 uppercase font-black mb-2 tracking-widest">Active Capital
+                    Allocation</span>
+                <div class="flex items-center">
+                    <span class="text-3xl font-mono-custom font-black text-purple-400 mr-2 opacity-80">$</span>
+                    <input type="number" id="invest-amount" value="1000" oninput="updateView()"
+                        class="bg-transparent text-4xl font-black font-mono-custom text-white outline-none w-48 border-b-2 border-white/5 focus:border-purple-400 transition-colors placeholder-gray-700"
+                        placeholder="0">
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation (2-Tier) -->
+        <div class="glass-container p-6 mb-8 flex flex-col gap-6">
+            <!-- Tier 1: Strategy Nav -->
+            <div class="flex flex-col md:flex-row md:items-center gap-4">
+                <span
+                    class="text-[11px] text-purple-300/70 uppercase font-black tracking-[0.15em] w-28 shrink-0">STRATEGY:</span>
+                <nav id="strategy-filters" class="flex flex-wrap gap-4"></nav>
+            </div>
+
+            <div class="w-full h-px bg-white/5"></div>
+
+            <!-- Tier 2: Chain Nav (Only for Farming) -->
+            <div id="chain-nav-container"
+                class="flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all duration-300 opacity-100 h-auto">
+                <div class="flex flex-col md:flex-row md:items-center gap-4">
+                    <span
+                        class="text-[11px] text-blue-300/70 uppercase font-black tracking-[0.15em] w-28 shrink-0">NETWORK:</span>
+                    <nav id="chain-filters" class="flex flex-wrap gap-2.5"></nav>
+                </div>
+
+                <button onclick="init()"
+                    class="flex items-center gap-2 px-4 py-2 text-[10px] font-bold tracking-[0.3em] uppercase text-purple-400 border border-purple-500/50 rounded-md hover:bg-purple-900/20 hover:border-purple-400 hover:shadow-[0_0_15px_rgba(168,85,247,0.3)] transition-all duration-300 group">
+                    SYNC NOW
+                    <svg class="w-3.5 h-3.5 text-purple-400 group-hover:rotate-180 transition-transform duration-500"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="glass-container overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.6)] relative">
+            <!-- V20 Auto-Sync Progress Bar -->
+            <div id="sync-progress"
+                class="absolute top-0 left-0 h-[2px] bg-purple-500 w-0 z-10 drop-shadow-[0_0_5px_rgba(168,85,247,0.8)]">
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <thead
+                        class="bg-black/40 text-gray-400 text-[10px] uppercase tracking-[0.2em] font-bold border-b border-white/5">
+                        <tr>
+                            <th class="px-5 py-4">ASSET / PROTOCOL</th>
+                            <th class="px-5 py-4 text-center">NETWORK</th>
+                            <th class="px-5 py-4 text-right">LIQUIDITY (TVL)</th>
+                            <th class="px-5 py-4 text-center">IL RISK</th>
+                            <th class="px-5 py-4 text-right text-purple-300">YIELD (APY)</th>
+                            <th class="px-5 py-4 text-right">RETURNS (D / W / M / Y)</th>
+                            <th class="px-5 py-4 text-center text-purple-500">7D TREND</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pool-list" class="divide-y divide-white/[0.03]"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- V20 Glassmorphism StatusBar & Utility -->
+    <footer
+        class="fixed bottom-0 left-0 w-full bg-black/40 backdrop-blur-xl border-t border-white/5 py-2.5 px-6 flex flex-col md:flex-row justify-between items-center gap-4 md:gap-0 text-[10px] text-purple-300 font-mono-custom font-bold tracking-[0.2em] shadow-[0_-5px_20px_rgba(0,0,0,0.5)] z-40">
+        <div class="flex gap-4 md:gap-8 items-center text-center">
+            <div>LAST SYNC: <span id="last-sync-time" class="text-white">--:--:--</span></div>
+            <div class="hidden md:block">GAS: <span id="gas-tracker" class="text-white neon-purple-text">--</span></div>
+            <div>POOLS MONITORED: <span id="pools-monitored" class="text-purple-400 font-black">0</span></div>
+        </div>
+        <div class="flex gap-6">
+            <button onclick="exportCSV()" class="hover:text-white hover:neon-purple-text transition-colors">EXPORT
+                CSV</button>
+            <button onclick="backupPrompt()" class="hover:text-white hover:neon-purple-text transition-colors">BACKUP
+                PROMPT</button>
+        </div>
+    </footer>
+
+    <!-- V20 Backup Modal -->
+    <div id="backup-modal"
+        class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div
+            class="bg-[#050505] border border-purple-500/50 rounded-xl p-8 max-w-2xl w-full shadow-[0_0_30px_rgba(168,85,247,0.2)]">
+            <h2 class="text-xl font-black text-white tracking-widest uppercase mb-4">Apex Predator Prompt Backup</h2>
+            <textarea readonly
+                class="w-full h-48 bg-black/50 border border-white/10 text-purple-300 font-mono-custom text-[11px] p-4 rounded-md focus:outline-none mb-4 resize-none">As an AI, recreate the 'DeFi Sentinel Pro | Apex Predator Edition'. Use HTML, Tailwind CSS, and simple JS. The app must feature: Ultra-Wide layout (98%), Tier-2 Navigation (Strategy & Network), 10M TVL filtering via DefiLlama API, Auto-Sync 60s progress bar, Gas Tracker formatting, Desktop Notifications/Audio ping for 'Hunter Mode' (APY > 1000%), Whale UI (Golden ROI text if return > investment), combined D/W/M returns cell, Candlestick SVG charts drawn inside JS, and CSV Export. Use colors #020202, text-purple-400 highlights, and Jetbrains Mono font.</textarea>
+            <div class="flex justify-end">
+                <button onclick="document.getElementById('backup-modal').classList.add('hidden')"
+                    class="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-md tracking-wider text-xs transition-colors">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allData = [];
+        let currentFiltered = [];
+        let currentStrategy = 'Yield Farming';
+        let currentChain = 'All';
+        let lastSyncString = '--:--:--';
+        let syncTimer;
+        const alertedPools = new Set();
+
+        const strategies = ['Yield Farming', 'Lending'];
+        const chains = ['All', 'Solana', 'Base', 'Arbitrum', 'Ethereum', 'Polygon', 'Optimism', 'Avalanche', 'BSC'];
+
+        // V20 Hunter Audio Ping
+        function playHunterPing() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if (ctx.state === 'suspended') ctx.resume();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1500, ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.5, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.4);
+            } catch (e) { }
+        }
+
+        // V21 Visual Network Fallback (Triple Layer)
+        window.handleChainError = function (img, originalChain, attempt = 1) {
+            const chainMap = {
+                'bsc': 'binance',
+                'hyperliquid': 'hyperliquid'
+            };
+            const cleanChain = originalChain.toLowerCase();
+            const mappedChain = chainMap[cleanChain] || cleanChain;
+
+            if (attempt === 1) {
+                img.onerror = function () { handleChainError(this, originalChain, 2); };
+                img.src = `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/${mappedChain}/info/logo.png`;
+            } else if (attempt === 2) {
+                img.onerror = function () { handleChainError(this, originalChain, 3); };
+                img.src = `https://cryptoicons.org/api/icon/${mappedChain}/25`;
+            } else {
+                img.onerror = null;
+                img.outerHTML = `<div class='w-6 h-6 rounded-full border border-purple-500/50 mx-auto bg-purple-900/20 flex items-center justify-center text-[11px] font-black text-purple-400 drop-shadow-[0_0_5px_rgba(168,85,247,0.8)] cursor-help' title='${originalChain}'>${originalChain.charAt(0)}</div>`;
+            }
+        };
+
+        // V20/V21 Auto-Refresh Engine
+        function startSyncTimer() {
+            clearInterval(syncTimer);
+            const bar = document.getElementById('sync-progress');
+            if (bar) {
+                bar.style.transition = 'none';
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.transition = 'width 300000ms linear';
+                    bar.style.width = '100%';
+                }, 50);
+            }
+            syncTimer = setInterval(() => init(true), 300000);
+        }
+
+        async function init(isAuto = false) {
+            renderFilters();
+            if (!isAuto) startSyncTimer();
+            try {
+                const flash = document.getElementById('sync-flash');
+                if (flash) flash.classList.remove('hidden');
+
+                document.getElementById('pool-list').innerHTML = `<tr><td colspan="7" class="p-20 text-center text-purple-400 font-mono-custom text-sm animate-pulse tracking-widest">ESTABLISHING SECURE CONNECTION...</td></tr>`;
+
+                const res = await fetch('/api/yields');
+                const json = await res.json();
+
+                if (json.data) allData = json.data;
+                else if (json.pools) allData = json.pools;
+                else allData = json;
+
+                console.log('Datos recibidos:', allData.length);
+
+                lastSyncString = new Date().toLocaleTimeString();
+                document.getElementById('last-sync-time').innerText = lastSyncString;
+                if (flash) flash.classList.add('hidden');
+
+                if (Notification.permission === 'default') {
+                    Notification.requestPermission();
+                }
+
+                updateView();
+            } catch (e) {
+                console.error(e);
+                const flash = document.getElementById('sync-flash');
+                if (flash) flash.classList.add('hidden');
+                document.getElementById('pool-list').innerHTML = `<tr><td colspan="7" class="p-20 text-center text-red-500/80 font-mono-custom text-sm font-bold tracking-widest">NETWORK TIMEOUT. PLEASE REFRESH.</td></tr>`;
+            }
+        }
+
+        function renderFilters() {
+            const stratContainer = document.getElementById('strategy-filters');
+            stratContainer.innerHTML = strategies.map(s => `
+                <button onclick="setStrategy('${s}')" class="strategy-btn px-8 py-3 rounded-lg text-sm font-black tracking-widest uppercase bg-white/[0.02] hover:bg-white/[0.05] ${currentStrategy === s ? 'active' : ''}">
+                    ${s}
+                </button>
+            `).join('');
+
+            const chainContainer = document.getElementById('chain-filters');
+            const chainNavWrapper = document.getElementById('chain-nav-container');
+
+            chainNavWrapper.style.opacity = '1';
+            chainNavWrapper.style.pointerEvents = 'auto';
+
+            chainContainer.innerHTML = chains.map(c => `
+                <button onclick="setChain('${c}')" class="chain-btn px-5 py-2 rounded-md text-[11px] font-bold tracking-widest uppercase bg-black/30 hover:bg-white/5 ${currentChain === c ? 'active' : ''}">
+                    ${c}
+                </button>
+            `).join('');
+        }
+
+        function setStrategy(strategy) {
+            currentStrategy = strategy;
+            renderFilters();
+            updateView();
+        }
+
+        function setChain(chain) {
+            currentChain = chain;
+            renderFilters();
+            updateView();
+        }
+
+        function updateView() {
+            const list = document.getElementById('pool-list');
+            const investInput = document.getElementById('invest-amount');
+            const invest = parseFloat(investInput.value) || 0;
+
+            if (!allData || allData.length === 0) {
+                return;
+            }
+
+            // FILTER 1: Strict TVL >= $10,000,000
+            let filtered = allData.filter(p => p.tvlUsd >= 10000000);
+
+            // FILTER 2: Strategy (Farming vs Lending)
+            if (currentStrategy === 'Lending') {
+                filtered = filtered.filter(p => typeof p.symbol === 'string' && !p.symbol.includes('-'));
+            } else {
+                filtered = filtered.filter(p => typeof p.symbol === 'string' && p.symbol.includes('-'));
+            }
+
+            // FILTER 3: Network Chain (applies to both)
+            if (currentChain !== 'All') {
+                filtered = filtered.filter(p => p.chain && p.chain.toLowerCase() === currentChain.toLowerCase());
+            }
+
+            // ORDER: Descending APY, limit 20
+            filtered = filtered.sort((a, b) => (b.apy || 0) - (a.apy || 0)).slice(0, 20);
+            currentFiltered = filtered; // Ensure global access for Export
+
+            // V20 Gas Tracker
+            const gasMap = { 'Ethereum': '15 Gwei', 'Arbitrum': '0.1 Gwei', 'Optimism': '0.05 Gwei', 'Base': '0.001 Gwei', 'Solana': '0.00005 SOL', 'Polygon': '30 Gwei', 'BSC': '3 Gwei', 'Avalanche': '25 nAVAX' };
+            const gasEl = document.getElementById('gas-tracker');
+            if (gasEl) gasEl.innerText = gasMap[currentChain] || 'AVG 1.5 Gwei';
+
+            const monitoredMonitor = document.getElementById('pools-monitored');
+            if (monitoredMonitor) monitoredMonitor.innerText = filtered.length;
+
+            if (filtered.length === 0) {
+                list.innerHTML = `<tr><td colspan="7" class="p-16 text-center text-gray-500 font-mono-custom text-sm font-bold tracking-wider">Buscando pools de alta liquidez (>10M)...</td></tr>`;
+                return;
+            }
+
+            list.innerHTML = filtered.map((p, index) => {
+                const apy = p.apy || 0;
+                const daily = (invest * (apy / 100)) / 365;
+                const weekly = daily * 7;
+                const monthly = daily * 30;
+                const annually = invest * (apy / 100);
+
+                let riskLabel = 'LOW';
+                const apiRisk = String(p.ilRisk).toLowerCase();
+
+                if (currentStrategy === 'Lending' || apiRisk === 'no') {
+                    riskLabel = 'LOW';
+                } else if (apiRisk === 'yes') {
+                    if (apy > 200) {
+                        riskLabel = 'HIGH';
+                    } else {
+                        riskLabel = 'MEDIUM';
+                    }
+                } else {
+                    riskLabel = 'MEDIUM';
+                }
+
+                const riskStyles = {
+                    'LOW': 'text-green-400 bg-green-900/30 border-green-400/50 shadow-[0_0_10px_rgba(74,222,128,0.2)]',
+                    'MEDIUM': 'text-yellow-400 bg-yellow-900/30 border-yellow-400/50 shadow-[0_0_10px_rgba(250,204,21,0.2)]',
+                    'HIGH': 'text-red-400 bg-red-900/30 border-red-500/50 shadow-[0_0_15px_rgba(248,113,113,0.4)]'
+                };
+
+                const safeProject = p.project || 'default';
+                const cleanChain = p.chain || 'UNKNOWN';
+
+                // Lógica V20 Hunter & Whale
+                let hunterClasses = '';
+                if (apy > 1000) {
+                    hunterClasses = 'bg-purple-950/40 border-purple-500 animate-pulse';
+                    if (!alertedPools.has(p.pool)) {
+                        alertedPools.add(p.pool);
+                        playHunterPing();
+                        if (document.hidden && Notification.permission === 'granted') {
+                            new Notification('🐋 WHALE APY DETECTED', { body: `Sentinel Pro found APY > 1000% on ${p.symbol} (${cleanChain})` });
+                        }
+                    }
+                }
+
+                const whaleClasses = annually > invest && invest > 0
+                    ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.6)]'
+                    : 'text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.6)]';
+
+                // Lógica V20 Candlestick SVGs (Pseudo-randomized based on APY hash to stay consistent)
+                const baseLine = 22; // lower baseline for rects
+                const volatility = Math.min((apy / 10), 15);
+                const pts = [];
+                for (let i = 1; i <= 7; i++) {
+                    pts.push(baseLine - (Math.sin(apy * i) * volatility + (i * 1.5)));
+                }
+                const candles = [];
+                for (let i = 1; i < 7; i++) {
+                    const prev = pts[i - 1];
+                    const curr = pts[i];
+                    const isGreen = curr < prev;
+                    const color = isGreen ? '#22c55e' : '#ef4444';
+                    const y = Math.min(curr, prev);
+                    let h = Math.abs(curr - prev);
+                    if (h < 2) h = 2;
+                    candles.push(`<rect x="${i * 12}" y="${y}" width="4" height="${h}" fill="${color}" rx="0.5"/>`);
+                }
+                const svgTrend = `<svg width="90" height="30" viewBox="0 0 90 30" class="drop-shadow-[0_0_5px_rgba(0,0,0,0.5)] mx-auto opacity-40 group-hover:opacity-100 transition-opacity duration-300">${candles.join('')}</svg>`;
+
+                // Lógica de carga Fix Definitivo e Iconos
+                const poolLinkTemplate = `<a href='https://defillama.com/yields/pool/${p.pool}' target='_blank' rel='noopener noreferrer' class='text-blue-400 hover:text-blue-300 font-bold transition-colors'>${p.symbol}</a>`;
+                const iconTemplate = `<img src='https://icons.llama.fi/${safeProject}.jpg' onerror='this.src="https://icons.llama.fi/${safeProject}.png"; this.onerror=function(){this.src="https://icons.llama.fi/${safeProject.split("-")[0]}.png"; this.onerror=function(){this.src="https://icons.llama.fi/default.png";}}' class='w-10 h-10 rounded-xl bg-white p-1 border border-white/10 shrink-0'>`;
+
+                const chainImg = `<img src='https://icons.llama.fi/chains/rsz_${cleanChain.toLowerCase()}.jpg' class='w-6 h-6 rounded-full border border-white/10 mx-auto hover:brightness-110 transition-all cursor-help' title='${cleanChain}' onerror='handleChainError(this, "${cleanChain}")'>`;
+
+                const apyGlowClass = apy > 500 ? 'drop-shadow-[0_0_5px_rgba(168,85,247,0.4)] text-purple-300' : 'drop-shadow-[0_0_5px_rgba(74,222,128,0.2)] neon-green-text';
+
+                return `
+                    <tr class="group hover:bg-white/[0.04] even:bg-white/[0.01] hover:shadow-[0_0_15px_rgba(168,85,247,0.1)] transition-all duration-300 border-b border-transparent hover:border-purple-500/30 border-l-[2px] border-l-transparent hover:border-l-purple-500 fade-in ${hunterClasses}" style="animation-delay: ${index * 0.04}s">
+                        <td class="px-5 py-3">
+                            <div class="flex items-center gap-5">
+                                ${iconTemplate}
+                                <div>
+                                    <div class="text-[14px] tracking-wide drop-shadow-md">
+                                        ${poolLinkTemplate}
+                                    </div>
+                                    <div class="text-[9px] text-gray-500 uppercase font-mono-custom font-bold tracking-[0.25em] mt-1">${safeProject}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-5 py-3 text-center align-middle">
+                            ${chainImg}
+                        </td>
+                        <td class="px-5 py-3 text-right text-gray-300 font-mono-custom font-bold text-[13px] tracking-tight">$${(p.tvlUsd / 1e6).toFixed(1)}M</td>
+                        <td class="px-5 py-3 text-center align-middle">
+                            <span class="risk-badge border ${riskStyles[riskLabel]}">${riskLabel}</span>
+                        </td>
+                        <td class="px-5 py-3 text-right font-black font-mono-custom text-base ${apyGlowClass}">${apy.toFixed(2)}%</td>
+                        <!-- V21 Fully Grouped Returns (D/W/M/Y) -->
+                        <td class="px-5 py-3 text-right flex flex-col items-end gap-1 justify-center h-full min-h-[90px]">
+                            <div class="flex items-center justify-between w-[120px]"><span class="text-[11px] text-gray-600 font-sans tracking-[0.2em] font-bold">D</span><span class="text-gray-300 font-mono-custom font-medium text-[13px] drop-shadow-[0_0_4px_rgba(168,85,247,0.3)] hover:text-white transition-colors">$${daily.toFixed(2)}</span></div>
+                            <div class="flex items-center justify-between w-[120px]"><span class="text-[11px] text-purple-900/80 font-sans tracking-[0.2em] font-bold">W</span><span class="text-purple-200 font-mono-custom font-medium text-[13px] drop-shadow-[0_0_4px_rgba(168,85,247,0.3)]">$${weekly.toFixed(2)}</span></div>
+                            <div class="flex items-center justify-between w-[120px]"><span class="text-[11px] text-purple-700/80 font-sans tracking-[0.2em] font-bold">M</span><span class="neon-purple-text font-mono-custom font-medium text-[13px] drop-shadow-[0_0_6px_rgba(168,85,247,0.5)]">$${monthly.toFixed(2)}</span></div>
+                            <div class="flex items-center justify-between w-[120px] pt-1 mt-1 border-t border-white/5"><span class="text-[11px] text-yellow-600 font-sans tracking-[0.2em] font-black drop-shadow-[0_0_3px_rgba(234,179,8,0.2)]">Y</span><span class="font-mono-custom font-bold text-[13px] ${whaleClasses}">$${annually.toFixed(2)}</span></div>
+                        </td>
+                        <td class="px-5 py-3 text-center align-middle">${svgTrend}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function exportCSV() {
+            if (!currentFiltered || currentFiltered.length === 0) return;
+            const invest = parseFloat(document.getElementById('invest-amount').value) || 0;
+            let csv = 'Project,Symbol,Chain,TVL USD,IL Risk,APY %,Daily $,Weekly $,Monthly $,Annual $\n';
+            currentFiltered.forEach(p => {
+                const apy = p.apy || 0;
+                const daily = (invest * (apy / 100)) / 365;
+                const weekly = daily * 7;
+                const monthly = daily * 30;
+                const annually = invest * (apy / 100);
+                csv += `"${p.project}","${p.symbol}","${p.chain}",${p.tvlUsd},${p.ilRisk},${apy.toFixed(2)},${daily.toFixed(2)},${weekly.toFixed(2)},${monthly.toFixed(2)},${annually.toFixed(2)}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'defi-sentinel-data.csv');
+            a.click();
+        }
+
+        function backupPrompt() {
+            document.getElementById('backup-modal').classList.remove('hidden');
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,12 @@
+node_modules/
+.npm/
+.vscode/
+.env
+.DS_Store
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# If saving backups manually
+backup/
+*.bak
